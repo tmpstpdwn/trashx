@@ -1,6 +1,6 @@
-# TTF to PNG Converter
+# Trashx - A simple trash management tool.
 
-`trashx` is a custom trash management system for moving, listing, and restoring files. It provides a convenient way to manage files and directories that you no longer need but want to keep temporarily.
+`trashx` is a simple trash management system for trashing, deleting, listing, and restoring files.
 
 ## Why ??
 
@@ -42,6 +42,11 @@ Example:
 ``` bash
 trashx -t $HOME/Pictures/Screenshots/desktop.png
 ```
+
+## Contributions
+
+Contributions are welcome :)
+
 ## License
 
 This project is licensed under the GPL3 License - see the [LICENSE](LICENSE) file for details.
