@@ -45,7 +45,7 @@ trashx -t $HOME/Pictures/Screenshots/desktop.png
 
 ## Contributions
 
-Contributions are welcome :)
+Contributions are welcome! Please fork the repository and submit a pull request for any improvements or new features.
 
 ## License
 
