@@ -14,8 +14,7 @@ Now i think its at a point where other can use it too.
 
 ## Installation
 
-- `Arch`: On arch and arch based systems you can just run `makepkg -si` to install the program with the provided `PKGBUILD`.
-- `Other distros`: On other distros manually copy/move the script `src/trashx` to a directory under the `$PATH` variable for global access. 
+manually copy/move the script `src/trashx` to a directory under the `$PATH` variable for global access. 
 
 ## Usage
 
