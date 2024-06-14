@@ -127,16 +127,16 @@ restore() {
 
 # Main logic
 case "$1" in
-	"-t")
+	"-t"|"--trash")
 		trash $2
 		;;
-	"-e")
+	"-e"|"--empty")
 		empty
 		;;
-	"-l")
+	"-l"|"--list")
 		list
 		;;
-	"-r")
+	"-r"|"--restore")
 		restore
 		;;
 	*)
