@@ -1,6 +1,7 @@
 # Maintainer: Tmpstpdwn <tmpstpdwn@tuta.io>
 pkgname=trashx
-pkgver=1.0.r3.05c640c.r6.398a956
+_pkgver=1.0
+pkgver=1.0
 pkgrel=1
 pkgdesc="A simple trash management tool."
 arch=('x86_64')
@@ -14,7 +15,7 @@ md5sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/$pkgname"
-  printf "${pkgver}.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  printf "${_pkgver}.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
 package() {
