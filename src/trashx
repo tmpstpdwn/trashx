@@ -109,7 +109,11 @@ restore() {
 		filename=$(echo "$file_info" | cut -d ',' -f 2)
 		dir=$(echo "$file_info" | cut -d ',' -f 3)
 		restore_path="$dir/$filename"
-		mv "$trash_dir/$id" "$dir/$filename"
+		if [ ! -e "$restore_path" ]; then
+		    mv "$trash_dir/$id" "$dir/$filename"
+		else
+		    echo "Error: '$restore_path' already exists."
+		fi
 		if [ $? -eq 0 ]; then
 			sed -i "/^$id,/d" "$data_file"
 			sed -i '/^$/d' "$data_file"
