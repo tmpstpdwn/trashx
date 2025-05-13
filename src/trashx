@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Script Name: trashx
-# Description: A custom trash management system for moving, listing, and restoring files.
+# Description: A custom trash management tool for trashing, listing, and restoring files.
 # Author: tmpstpdwn
 # Email: tmpstpdwn@tuta.io
-# Version: 1.0
+# Version: 1.1
 # Date Created: 2024-06-14
-# Last Modified: 2024-09-13
+# Last Modified: 2025-05-13
 # License: GPL3
 
 # Path variables for storage.
@@ -14,66 +14,67 @@ trashx_dir="$HOME/.local/share/Trashx"
 trash_dir="$HOME/.local/share/Trashx/Trash"
 data_file="$trashx_dir/data"
 
-# Create ~/.local/share/Trashx Dir if ! -e.
-if [ ! -d "$trashx_dir" ]; then
-	mkdir -p "$trashx_dir"
-fi
+# Dependancy check.
+command -v uuidgen >/dev/null 2>&1 || { echo >&2 "uuidgen is required but not installed."; exit 1; }
+command -v csvlens >/dev/null 2>&1 || { echo >&2 "csvlens is required but not installed."; exit 1; }
+
+# Ensure Trashx dir exists.
+mkdir -p "$trashx_dir"
 
 # Function to print usage.
 print_usage() {
     echo
-	echo "Usage: trashx <command> [<args>]                            "
+	echo "Usage: trashx <command> [<args>]                       "
     echo
-	echo "Commands:                                                   "
-	echo "  -t, --trash   : Move a file or directory to the trash     "
-	echo "            Example: trashx -t / --trash myfile.txt         "
-	echo "  -e, --empty   : Empty the trash                           "
-	echo "            Example: trashx -e / empty                      "
-	echo "  -l, --list    : List the contents of the trash            "
-	echo "            Example: trashx -l / --list                     "
-	echo "  -r, --restore : Restore a file from the trash             "
-	echo "            Example: trashx -r / --restore                  "
-	echo "  -h, --help, * : Show this help message                    "
-    echo
-	echo "Note: only -t, --trash command have an argument which       "
-	echo "      can be a file or folder path to trash.                "
+	echo "Commands:                                              "
+	echo "  -t, --trash   : Move a file or directory to the trash"
+	echo "                 Example: trashx -t myfile.txt         "
+	echo "  -e, --empty   : Empty the trash                      "
+	echo "                 Example: trashx -e                    "
+	echo "  -l, --list    : List the contents of the trash       "
+	echo "                 Example: trashx -l                    "
+	echo "  -r, --restore : Restore a file from the trash        "
+	echo "                 Example: trashx -r                    "
+	echo "  -h, --help, * : Show this help message               "
     echo
 }
 
-# Trash function trashes the given path.
+# Trash fn Trash's the given path.
 trash() {
-	if [ ! -e "$data_file" ]; then
-		echo -e "ID,Name,Path,Size,Date,Time" > "$data_file"
-	fi
-	if [ ! -e "$trash_dir" ]; then
-		mkdir "$trash_dir"
-	fi
-    path=$@
+    path="$1"
+
+    if [ -z "$path" ] || [ ! -e "$path" ]; then
+        echo "Error: No input or file/directory not found. Try trashx -h"
+        exit 1
+    fi
+
     if [ -L "$path" ]; then
         rm "$path"
         echo "symlink $path removed from system."
         exit 0
     fi
-	if [ -e "$path" ]; then
-		id="$(uuidgen)"
-		file_name=$(basename "$path")
-		file_path=$(dirname "$path")
-		file_size=$(du "$path" -sh | awk '{print $1}')
-		file_date=$(date '+%Y-%m-%d')
-		file_time=$(date | awk '{print $4}')
-		mv "$path" "$trash_dir/$id"
-		if [ $? -eq 0 ]; then
-			echo -e "$id,$file_name,$file_path,$file_size,$file_date,$file_time" >> "$data_file"
-			echo "$path moved to Trash."
-            exit 0
-		else
-			echo "Error: Trashing "$path" unsuccesfull."
-            exit 1
-		fi
-	else
-		echo "Error: No input or File/directory not found. Try trashx -h"
+
+    mkdir -p "$trash_dir"
+
+    if [ ! -f "$data_file" ] || [ ! -s "$data_file" ]; then
+        echo "ID,Name,Path,Size,Date,Time" > "$data_file"
+    fi
+
+    id="$(uuidgen)"
+    file_name=$(basename "$path")
+    file_path=$(dirname "$path")
+    file_size=$(du -sh "$path" | awk '{print $1}')
+    file_date=$(date '+%Y-%m-%d')
+    file_time=$(date '+%H:%M:%S')
+
+    if mv "$path" "$trash_dir/$id"; then
+        echo -e "$id,$file_name,$file_path,$file_size,$file_date,$file_time" >> "$data_file"
+        echo "$path moved to Trash."
+        exit 0
+    else
+        echo "Error: Could not move '$path' to Trash."
         exit 1
-	fi
+    fi
 }
 
 # Empty fn empties the Trash folder.
@@ -86,17 +87,16 @@ empty() {
 	fi
 }
 
-# List fn lists the trash contents.
+# List fn lists the Trash contents.
 list() {
 	if [ -z "$(ls -A "$trashx_dir")" ]; then
 		echo "Trash is already empty. Nothing to list."
 	else
 		csvlens "$data_file"
 	fi
-
 }
 
-# Restore fn for restoring deleted contents.
+# Restore fn for restoring Trash contents.
 restore() {
 	if [ -z "$(ls -A "$trashx_dir")" ]; then
 		echo "Trash is empty. Nothing to restore."
@@ -105,34 +105,33 @@ restore() {
 		if [ ${#id} -eq 0 ]; then
 			exit 1
 		fi
+
 		file_info=$(grep "^$id," "$data_file")
 		filename=$(echo "$file_info" | cut -d ',' -f 2)
 		dir=$(echo "$file_info" | cut -d ',' -f 3)
 		restore_path="$dir/$filename"
-		if [ ! -e "$restore_path" ]; then
-		    mv "$trash_dir/$id" "$dir/$filename"
-		else
-		    echo "Error: '$restore_path' already exists."
-		fi
-		if [ $? -eq 0 ]; then
-			sed -i "/^$id,/d" "$data_file"
-			sed -i '/^$/d' "$data_file"
-			echo "$filename restored to $restore_path."
-		else
-			echo "Error: Restoration unsuccesfull."
-			exit 1
-		fi
-		if [ $(cat "$data_file" | wc -l) -eq 1 ]; then
-			rm -rf "$trashx_dir"/*
-			echo "Trash emptied."
-		fi
+
+        if [ ! -e "$restore_path" ]; then
+            if mv "$trash_dir/$id" "$restore_path"; then
+                sed -i "/^$id,/d" "$data_file"
+                sed -i "/^$/d" "$data_file"
+                echo "$filename restored to $restore_path."
+            else
+                echo "Error: Restoration failed during move."
+                exit 1
+            fi
+        else
+            echo "Error: '$restore_path' already exists."
+            exit 1
+        fi
+
 	fi
 }
 
 # Main logic
 case "$1" in
 	"-t"|"--trash")
-		trash $2
+		trash "$2"
 		;;
 	"-e"|"--empty")
 		empty
@@ -147,3 +146,5 @@ case "$1" in
 		print_usage
 		;;
 esac
+
+# END
