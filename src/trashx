@@ -14,14 +14,14 @@ trashx_dir="$HOME/.local/share/Trashx"
 trash_dir="$HOME/.local/share/Trashx/Trash"
 data_file="$trashx_dir/data"
 
-# Dependancy check.
-command -v uuidgen >/dev/null 2>&1 || { echo >&2 "uuidgen is required but not installed."; exit 1; }
-command -v csvlens >/dev/null 2>&1 || { echo >&2 "csvlens is required but not installed."; exit 1; }
+# Dependency check.
+command -v uuidgen >/dev/null 2>&1 || { echo >&2 "Error: uuidgen is required but not installed."; exit 1; }
+command -v csvlens >/dev/null 2>&1 || { echo >&2 "Error: csvlens is required but not installed."; exit 1; }
 
 # Ensure Trashx dir exists.
 mkdir -p "$trashx_dir"
 
-# Function to print usage.
+# Print usage.
 print_usage() {
     echo
 	echo "Usage: trashx <command> [<args>]                       "
@@ -35,7 +35,7 @@ print_usage() {
 	echo "                 Example: trashx -l                    "
 	echo "  -r, --restore : Restore a file from the trash        "
 	echo "                 Example: trashx -r                    "
-	echo "  -h, --help, * : Show this help message               "
+	echo "  -h, --help,   : Show this help message               "
     echo
 }
 
@@ -70,7 +70,6 @@ trash() {
     if mv "$path" "$trash_dir/$id"; then
         echo -e "$id,$file_name,$file_path,$file_size,$file_date,$file_time" >> "$data_file"
         echo "$path moved to Trash."
-        exit 0
     else
         echo "Error: Could not move '$path' to Trash."
         exit 1
@@ -90,7 +89,7 @@ empty() {
 # List fn lists the Trash contents.
 list() {
 	if [ -z "$(ls -A "$trashx_dir")" ]; then
-		echo "Trash is already empty. Nothing to list."
+		echo "Trash is empty. Nothing to list."
 	else
 		csvlens "$data_file"
 	fi
