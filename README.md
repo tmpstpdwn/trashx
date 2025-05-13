@@ -2,11 +2,6 @@
 
 `trashx` is a simple trash management system for trashing, deleting, listing, and restoring files.
 
-## Why ??
-
-I made this small script to help me manage trash on my system. even though programs already exist for the same, i though it would be a good learning experiance. 
-Now i think its at a point where other can use it too.
-
 ## Dependancies
 
 - `uuidgen` : for unique ID generation for better trash management.
@@ -14,7 +9,13 @@ Now i think its at a point where other can use it too.
 
 ## Installation
 
-manually copy/move the script `src/trashx` to a directory under the `$PATH` variable for global access. 
+```bash
+git clone https://github.com/tmpstpdwn/trashx.git
+cd trashx
+mv src/trashx ~/.local/bin
+```
+
+- Make sure that `~/.local/bin` is in `$PATH`.
 
 ## Usage
 
@@ -42,10 +43,6 @@ Example:
 trashx -t $HOME/Pictures/Screenshots/desktop.png
 ```
 
-## Contributions
-
-Contributions are welcome! Please fork the repository and submit a pull request for any improvements or new features.
-
 ## License
 
-This project is licensed under the GPL3 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL3 [LICENSE](LICENSE).
