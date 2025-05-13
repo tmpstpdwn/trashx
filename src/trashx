@@ -35,7 +35,7 @@ print_usage() {
 	echo "                 Example: trashx -l                    "
 	echo "  -r, --restore : Restore a file from the trash        "
 	echo "                 Example: trashx -r                    "
-	echo "  -h, --help,   : Show this help message               "
+	echo "  -h, --help    : Show this help message               "
     echo
 }
 
