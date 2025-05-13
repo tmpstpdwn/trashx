@@ -1,6 +1,6 @@
 # Trashx - A simple trash management tool.
 
-`trashx` is a simple trash management system for trashing, deleting, listing, and restoring files.
+`trashx` is a simple trash management tool for trashing, listing, and restoring files.
 
 ## Dependancies
 
@@ -24,23 +24,14 @@ Usage: trashx <command> [<args>]
 
 Commands:
   -t, --trash   : Move a file or directory to the trash
-            Example: trashx -t / --trash myfile.txt
+                 Example: trashx -t myfile.txt
   -e, --empty   : Empty the trash
-            Example: trashx -e / empty
+                 Example: trashx -e
   -l, --list    : List the contents of the trash
-            Example: trashx -l / --list
+                 Example: trashx -l
   -r, --restore : Restore a file from the trash
-            Example: trashx -r / --restore
-  -h, --help, * : Show this help message
-
-Note: only -t, --trash command have an argument which
-      can be a file or folder path to trash.
-```
-
-Example:
-
-``` bash
-trashx -t $HOME/Pictures/Screenshots/desktop.png
+                 Example: trashx -r
+  -h, --help,   : Show this help message
 ```
 
 ## License
