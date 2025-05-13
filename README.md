@@ -31,7 +31,7 @@ Commands:
                  Example: trashx -l
   -r, --restore : Restore a file from the trash
                  Example: trashx -r
-  -h, --help,   : Show this help message
+  -h, --help    : Show this help message
 ```
 
 ## License
