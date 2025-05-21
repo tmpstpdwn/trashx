@@ -41,7 +41,7 @@ print_usage() {
 
 # Trash fn Trash's the given path.
 trash() {
-    path="$1"
+    path=$(realpath "$1")
 
     if [ -z "$path" ] || [ ! -e "$path" ]; then
         echo "Error: No input or file/directory not found. Try trashx -h"
