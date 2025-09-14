@@ -4,10 +4,10 @@
 # Description: A custom trash management tool for trashing, listing, and restoring files.
 # Author: tmpstpdwn
 # Repo: https://github.com/tmpstpdwn/trashx
-# Version: 1.1
+# Version: 1.2
 # Date Created: 2024-06-14
-# Last Modified: 2025-05-21
-# License: GPL3
+# Last Modified: 2025-09-14
+# License: MIT
 
 # Path variables for storage.
 trashx_dir="$HOME/.local/share/Trashx"
@@ -16,130 +16,128 @@ data_file="$trashx_dir/data"
 
 # Dependency check.
 command -v uuidgen >/dev/null 2>&1 || { echo >&2 "Error: uuidgen is required but not installed."; exit 1; }
-command -v csvlens >/dev/null 2>&1 || { echo >&2 "Error: csvlens is required but not installed."; exit 1; }
+command -v fzf >/dev/null 2>&1 || { echo >&2 "Error: fzf is required but not installed."; exit 1; }
 
 # Ensure Trashx dir exists.
 mkdir -p "$trashx_dir"
 
 # Print usage.
 print_usage() {
-    echo
-	echo "Usage: trashx <command> [<args>]                       "
-    echo
-	echo "Commands:                                              "
-	echo "  -t, --trash   : Move a file or directory to the trash"
-	echo "                 Example: trashx -t myfile.txt         "
-	echo "  -e, --empty   : Empty the trash                      "
-	echo "                 Example: trashx -e                    "
-	echo "  -l, --list    : List the contents of the trash       "
-	echo "                 Example: trashx -l                    "
-	echo "  -r, --restore : Restore a file from the trash        "
-	echo "                 Example: trashx -r                    "
-	echo "  -h, --help    : Show this help message               "
-    echo
+	echo
+	echo "Usage: trashx <Action> <Arg>                                                "
+	echo
+	echo "Action         | Arg                                                        "
+	echo "---------------------------------------------------------------------------- "
+	echo "  -t, --trash  | <path1> <path2> ... : Move a file or directory to the trash "
+	echo "  -e, --empty  |                     : Empty the trash                       "
+	echo "  -l, --list   |                     : List the contents of the trash        "
+	echo "  -h, --help   |                     : Show this help message                "
+	echo
 }
 
-# Trash fn Trash's the given path.
+# Trash the given file / dir.
 trash() {
-    path=$(realpath "$1")
 
-    if [ -z "$path" ] || [ ! -e "$path" ]; then
-        echo "Error: No input or file/directory not found. Try trashx -h"
-        exit 1
+  mkdir -p "$trash_dir"
+  [ -f "$data_file" ] || touch "$data_file"
+
+	for path in "$@"; do
+    abs_path=$(realpath "$path")
+
+    if [ -z "$abs_path" ] || [ ! -e "$abs_path" ]; then
+	    echo "Error: '$path' not found. Skipping."
+	    continue
     fi
 
-    if [ -L "$path" ]; then
-        rm "$path"
-        echo "symlink $path removed from system."
-        exit 0
-    fi
-
-    mkdir -p "$trash_dir"
-
-    if [ ! -f "$data_file" ] || [ ! -s "$data_file" ]; then
-        echo "ID,Name,Path,Size,Date,Time" > "$data_file"
+    if [ -L "$abs_path" ]; then
+      echo "Error: Cannot trash symlink '$abs_path'. Skipping."
+      continue
     fi
 
     id="$(uuidgen)"
-    file_name=$(basename "$path")
-    file_path=$(dirname "$path")
-    file_size=$(du -sh "$path" | awk '{print $1}')
-    file_date=$(date '+%Y-%m-%d')
-    file_time=$(date '+%H:%M:%S')
+    item_name=$(basename "$abs_path")
+    item_path=$(dirname "$abs_path")
+    item_size=$(du -sh "$abs_path" | awk '{print $1}')
+    item_date=$(date '+%Y-%m-%d')
+    item_time=$(date '+%H:%M:%S')
 
-    if mv "$path" "$trash_dir/$id"; then
-        echo -e "$id,$file_name,$file_path,$file_size,$file_date,$file_time" >> "$data_file"
-        echo "$path moved to Trash."
+    if mv "$abs_path" "$trash_dir/$id"; then
+      echo -e "$id,$item_name,$item_path,$item_size,$item_date,$item_time" >> "$data_file"
+      echo "OK: '$abs_path' moved to Trash."
     else
-        echo "Error: Could not move '$path' to Trash."
-        exit 1
+      echo "Error: Could not trash '$abs_path'. Skipping."
     fi
+  done
 }
 
-# Empty fn empties the Trash folder.
+# Empty the Trash folder.
 empty() {
-	if [ -z "$(ls -A "$trashx_dir")" ]; then
-		echo "Trash is already empty."
+	if [ -z "$(ls -A "$trash_dir" 2>/dev/null)" ]; then
+		echo "Error: Trash is already empty."
 	else
 		rm -rf "$trashx_dir"/*
-		echo "Trash emptied."
+		echo "OK: Trash emptied."
 	fi
 }
 
-# List fn lists the Trash contents.
+# List the Trash contents and Restore if selected.
 list() {
-	if [ -z "$(ls -A "$trashx_dir")" ]; then
-		echo "Trash is empty. Nothing to list."
-	else
-		csvlens "$data_file"
-	fi
-}
 
-# Restore fn for restoring Trash contents.
-restore() {
-	if [ -z "$(ls -A "$trashx_dir")" ]; then
-		echo "Trash is empty. Nothing to restore."
+	if [ -z "$(ls -A "$trash_dir" 2>/dev/null)" ]; then
+		echo "Error: Trash is empty. Nothing to list."
 	else
-        id=$(csvlens "$data_file" --echo-column 'ID')
-		if [ ${#id} -eq 0 ]; then
-			exit 1
+
+		selection=$(cat "$data_file" | \
+		  fzf --multi --layout=reverse --border="sharp" \
+		      --preview-border="sharp" \
+		      --border-label="Trashx" \
+		      --preview-label="Item INFO" \
+		      --prompt="Search: " \
+		      --ghost="Trashed items..." \
+		      --delimiter=',' --with-nth=2 \
+		      --preview='bash -c "echo -e \"Name: {2}\nPath: {3}\nSize: {4}\nDate: {5}\nTime: {6}\""')
+
+		if [ -z "$selection" ]; then
+	    return
 		fi
 
-		file_info=$(grep "^$id," "$data_file")
-		filename=$(echo "$file_info" | cut -d ',' -f 2)
-		dir=$(echo "$file_info" | cut -d ',' -f 3)
-		restore_path="$dir/$filename"
+		echo "$selection" | while IFS= read -r line; do
 
-        if [ ! -e "$restore_path" ]; then
-            if mv "$trash_dir/$id" "$restore_path"; then
-                sed -i "/^$id,/d" "$data_file"
-                sed -i "/^$/d" "$data_file"
-                echo "$filename restored to $restore_path."
-            else
-                echo "Error: Restoration failed during move."
-                exit 1
-            fi
+	    id=$(echo "$line" | awk -F ',' '{print $1}')
+	    item_info=$(grep "^$id," "$data_file")
+	    item_name=$(echo "$item_info" | cut -d ',' -f 2)
+	    dir=$(echo "$item_info" | cut -d ',' -f 3)
+	    restore_path="$dir/$item_name"
+
+	    if [ ! -e "$restore_path" ]; then
+	      if mv "$trash_dir/$id" "$restore_path"; then
+          sed -i "/^$id,/d" "$data_file"
+          sed -i "/^$/d" "$data_file"
+          echo "OK: $item_name restored to $restore_path."
         else
-            echo "Error: '$restore_path' already exists."
-            exit 1
+          echo "Error: Could not restore $item_name."
         fi
+	    else
+        echo "Error: '$restore_path' already exists. Skipping."
+	    fi
 
-	fi
+		done
+
+  fi
+
 }
 
 # Main logic
 case "$1" in
 	"-t"|"--trash")
-		trash "$2"
+		shift
+		trash "$@"
 		;;
 	"-e"|"--empty")
 		empty
 		;;
 	"-l"|"--list")
 		list
-		;;
-	"-r"|"--restore")
-		restore
 		;;
 	*)
 		print_usage
