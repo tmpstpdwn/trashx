@@ -4,7 +4,6 @@
 
 ## Dependancies
 
-- `uuidgen` : for unique ID generation for better trash management.
 - `fzf`     : for listing, searching through and selecting trashed items.
 
 ## Installation
@@ -37,10 +36,8 @@ Action         | Arg
 
 | Key Combo   | Description                                   |
 |-------------|-----------------------------------------------|
-| `Ctrl + T`  | Toggle selection of the current item          |
-| `Ctrl + I`  | Toggle selection of **all** items             |
-| `Ctrl + A`  | Select **all** items                          |
-| `Ctrl + D`  | Deselect **all** items                        |
+| `Tab`       | Toggle current selection and move down        |
+| `Shift+Tab` | Toggle current selection and move up          |
 | `Esc`       | Exit without making a selection               |
 | `Enter`     | Restore current selection(s) if there are any |
 

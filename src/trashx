@@ -17,7 +17,6 @@ data_file="$trashx_dir/data"
 DELIM=","
 
 # Dependency check.
-command -v uuidgen >/dev/null 2>&1 || { echo >&2 "Error: uuidgen is required but not installed."; exit 1; }
 command -v fzf >/dev/null 2>&1 || { echo >&2 "Error: fzf is required but not installed."; exit 1; }
 
 # Ensure Trashx dir exists.
@@ -62,7 +61,7 @@ trash() {
     item_date=$(date '+%Y-%m-%d')
     item_time=$(date '+%H:%M:%S')
 
-    if mv "$abs_path" "$trash_dir/$id"; then
+    if mv "$abs_path" "$trash_dir/$id" 2>/dev/null; then
 			echo -e "$id$DELIM$item_name$DELIM$item_path$DELIM$item_size$DELIM$item_date$DELIM$item_time" >> "$data_file"
       echo "OK: '$abs_path' moved to Trash."
     else
@@ -83,19 +82,18 @@ empty() {
 	fi
 }
 
+# fzf front end.
 front_end() {
   fzf --multi --layout=reverse --border="sharp" \
       --preview-border="sharp" \
       --border-label="Trashx" \
-      --preview-label="Item INFO" \
+      --preview-label="Trash INFO" \
       --prompt="Search: " \
       --ghost="Trashed items..." \
 			--delimiter="$DELIM" --with-nth=2 \
       --preview='bash -c "echo -e \"Name: {2}\nPath: {3}\nSize: {4}\nDate: {5}\nTime: {6}\""'	\
-		  --bind 'ctrl-t:toggle' \
-		  --bind 'ctrl-i:toggle-all' \
-		  --bind 'ctrl-a:select-all' \
-		  --bind 'ctrl-d:deselect-all' \
+		  --bind 'tab:toggle+down' \
+		  --bind 'btab:up+toggle' \
 		  --bind 'esc:abort'
 }
 
@@ -121,7 +119,7 @@ list() {
 	    restore_path="$dir/$item_name"
 
 	    if [ ! -e "$restore_path" ]; then
-	      if mv "$trash_dir/$id" "$restore_path"; then
+	      if mv "$trash_dir/$id" "$restore_path" 2>/dev/null; then
           sed -i "/^$id,/d" "$data_file"
           sed -i "/^$/d" "$data_file"
           echo "OK: $item_name restored to $restore_path."
