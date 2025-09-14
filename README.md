@@ -1,6 +1,6 @@
 # Trashx - A simple trash management tool.
 
-`trashx` is a simple trash management tool for trashing, listing, and restoring files.
+`trashx` is a simple trash management tool.
 
 ## Dependancies
 
@@ -33,8 +33,16 @@ Action         | Arg
 
 - This program uses fzf to interface with trashed data.
 - You can use `--list` action to view, search and restore trashed data via fzf.
-- Once in fzf, Tab key can be used for multiselection, Enter key
-  for restoration and Esc key to quit.
+- Following are the fzf keybindings.
+
+| Key Combo   | Description                                   |
+|-------------|-----------------------------------------------|
+| `Ctrl + T`  | Toggle selection of the current item          |
+| `Ctrl + I`  | Toggle selection of **all** items             |
+| `Ctrl + A`  | Select **all** items                          |
+| `Ctrl + D`  | Deselect **all** items                        |
+| `Esc`       | Exit without making a selection               |
+| `Enter`     | Restore current selection(s) if there are any |
 
 ## License
 

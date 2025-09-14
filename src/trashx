@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script Name: trashx
-# Description: A custom trash management tool for trashing, listing, and restoring files.
+# Description: A Simple trash management tool.
 # Author: tmpstpdwn
 # Repo: https://github.com/tmpstpdwn/trashx
 # Version: 1.2
@@ -14,6 +14,8 @@ trashx_dir="$HOME/.local/share/Trashx"
 trash_dir="$HOME/.local/share/Trashx/Trash"
 data_file="$trashx_dir/data"
 
+DELIM=","
+
 # Dependency check.
 command -v uuidgen >/dev/null 2>&1 || { echo >&2 "Error: uuidgen is required but not installed."; exit 1; }
 command -v fzf >/dev/null 2>&1 || { echo >&2 "Error: fzf is required but not installed."; exit 1; }
@@ -23,7 +25,6 @@ mkdir -p "$trashx_dir"
 
 # Print usage.
 print_usage() {
-	echo
 	echo "Usage: trashx <Action> <Arg>                                                "
 	echo
 	echo "Action         | Arg                                                        "
@@ -32,16 +33,16 @@ print_usage() {
 	echo "  -e, --empty  |                     : Empty the trash                       "
 	echo "  -l, --list   |                     : List the contents of the trash        "
 	echo "  -h, --help   |                     : Show this help message                "
-	echo
 }
 
-# Trash the given file / dir.
+# Trash the given path.
 trash() {
 
   mkdir -p "$trash_dir"
   [ -f "$data_file" ] || touch "$data_file"
 
 	for path in "$@"; do
+
     abs_path=$(realpath "$path")
 
     if [ -z "$abs_path" ] || [ ! -e "$abs_path" ]; then
@@ -62,12 +63,14 @@ trash() {
     item_time=$(date '+%H:%M:%S')
 
     if mv "$abs_path" "$trash_dir/$id"; then
-      echo -e "$id,$item_name,$item_path,$item_size,$item_date,$item_time" >> "$data_file"
+			echo -e "$id$DELIM$item_name$DELIM$item_path$DELIM$item_size$DELIM$item_date$DELIM$item_time" >> "$data_file"
       echo "OK: '$abs_path' moved to Trash."
     else
       echo "Error: Could not trash '$abs_path'. Skipping."
     fi
+
   done
+
 }
 
 # Empty the Trash folder.
@@ -80,22 +83,30 @@ empty() {
 	fi
 }
 
-# List the Trash contents and Restore if selected.
+front_end() {
+  fzf --multi --layout=reverse --border="sharp" \
+      --preview-border="sharp" \
+      --border-label="Trashx" \
+      --preview-label="Item INFO" \
+      --prompt="Search: " \
+      --ghost="Trashed items..." \
+			--delimiter="$DELIM" --with-nth=2 \
+      --preview='bash -c "echo -e \"Name: {2}\nPath: {3}\nSize: {4}\nDate: {5}\nTime: {6}\""'	\
+		  --bind 'ctrl-t:toggle' \
+		  --bind 'ctrl-i:toggle-all' \
+		  --bind 'ctrl-a:select-all' \
+		  --bind 'ctrl-d:deselect-all' \
+		  --bind 'esc:abort'
+}
+
+# List the Trash contents and Restore selections if made.
 list() {
 
 	if [ -z "$(ls -A "$trash_dir" 2>/dev/null)" ]; then
 		echo "Error: Trash is empty. Nothing to list."
 	else
 
-		selection=$(cat "$data_file" | \
-		  fzf --multi --layout=reverse --border="sharp" \
-		      --preview-border="sharp" \
-		      --border-label="Trashx" \
-		      --preview-label="Item INFO" \
-		      --prompt="Search: " \
-		      --ghost="Trashed items..." \
-		      --delimiter=',' --with-nth=2 \
-		      --preview='bash -c "echo -e \"Name: {2}\nPath: {3}\nSize: {4}\nDate: {5}\nTime: {6}\""')
+		selection=$(cat "$data_file" | front_end)
 
 		if [ -z "$selection" ]; then
 	    return
@@ -139,9 +150,11 @@ case "$1" in
 	"-l"|"--list")
 		list
 		;;
-	*)
+	"-h"|"--help")
 		print_usage
 		;;
+	*)
+		echo -e "Error: Try trashx --help."
 esac
 
 # END
