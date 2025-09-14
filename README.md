@@ -20,17 +20,21 @@ mv src/trashx ~/.local/bin
 ## Usage
 
 ``` bash
+Usage: trashx <Action> <Arg>
 
-"Usage: trashx <Action> <Arg>                                                 "
-
-"Action         | Arg                                                         "
-"---------------------------------------------------------------------------- "
-"  -t, --trash  | <path1> <path2> ... : Move a file or directory to the trash "
-"  -e, --empty  |                     : Empty the trash                       "
-"  -l, --list   |                     : List the contents of the trash        "
-"  -h, --help   |                     : Show this help message                "
+Action         | Arg
+----------------------------------------------------------------------------
+  -t, --trash  | <path1> <path2> ... : Move a file or directory to the trash
+  -e, --empty  |                     : Empty the trash
+  -l, --list   |                     : List the contents of the trash
+  -h, --help   |                     : Show this help message
 
 ```
+
+- This program uses fzf to interface with trashed data.
+- You can use `--list` action to view, search and restore trashed data via fzf.
+- Once in fzf, Tab key can be used for multiselection, Enter key
+  for restoration and Esc key to quit.
 
 ## License
 
